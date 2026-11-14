@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shipyard — Claude Code kit that proves its work</title>
+<meta name="description" content="Skills, subagents, slash commands and safety hooks for Claude Code. Claude runs your tests before it says done, fixes root causes, and cannot force-push to main. Free Lite plugin, $19 Pro.">
+<link rel="canonical" href="https://invahak.github.io/shipyard/">
+<meta property="og:title" content="Shipyard — Claude Code kit that proves its work">
+<meta property="og:description" content="Verification, debugging, review and security skills plus hooks that block destructive commands. Free Lite, $19 Pro.">
+<meta property="og:url" content="https://invahak.github.io/shipyard/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23FF7A1A'/%3E%3Cpath d='M8 20h16l-3 5H11z M15 7h2v11h-2z M17 8l6 6h-6z' fill='%230B0D10'/%3E%3C/svg%3E">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Shipyard for Claude Code","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, macOS, Linux","offers":[{"@type":"Offer","price":"0","priceCurrency":"USD","name":"Shipyard Lite"},{"@type":"Offer","price":"19","priceCurrency":"USD","name":"Shipyard Pro"}]}
+</script>
+<style>
+:root{
+  --bg:#0B0D10;--surface:#12161B;--surface-2:#181D24;--line:#232A33;
+  --text:#E8ECF1;--muted:#8B95A3;--accent:#FF7A1A;--pass:#3DDC84;--block:#FF5A5F;
+  --mono:ui-monospace,SFMono-Regular,"JetBrains Mono",Menlo,Consolas,monospace;
+  --sans:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --gutter:max(16px,5vw);
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font:16px/1.6 var(--sans);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit}
+code,kbd{font-family:var(--mono);font-size:.9em}
+.wrap{padding:0 var(--gutter);max-width:1280px;margin:0 auto}
+nav{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:16px var(--gutter);background:rgba(11,13,16,.8);backdrop-filter:blur(10px);border-bottom:1px solid transparent;transition:border-color .3s}
+nav.scrolled{border-color:var(--line)}
+.logo{font-weight:700;letter-spacing:-.02em;text-decoration:none;display:flex;gap:10px;align-items:center}
+.logo i{width:22px;height:22px;border-radius:6px;background:var(--accent);display:inline-block}
+nav ul{display:flex;gap:28px;list-style:none;padding:0;align-items:center}
+nav ul a{text-decoration:none;color:var(--muted);font-size:14px}
+nav ul a:hover{color:var(--text)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:10px;font-weight:600;text-decoration:none;font-size:15px;transition:transform .15s,background .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:var(--accent);color:#0B0D10}
+.btn-ghost{border:1px solid var(--line);color:var(--text)}
+nav .btn{padding:8px 14px;font-size:14px}
+
+/* hero */
+.hero{min-height:calc(100vh - 64px);display:grid;grid-template-columns:1.1fr 1fr;gap:56px;align-items:center;padding-top:48px;padding-bottom:80px}
+.eyebrow{font-family:var(--mono);color:var(--accent);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+h1{font-size:clamp(44px,7vw,96px);line-height:.98;letter-spacing:-.045em;margin:18px 0 24px;font-weight:800}
+h1 .w{display:inline-block;opacity:0;transform:translateY(.4em);transition:opacity .6s,transform .6s cubic-bezier(.2,.7,.2,1)}
+h1.in .w{opacity:1;transform:none}
+.lede{color:var(--muted);font-size:clamp(17px,1.6vw,20px);max-width:34ch}
+.cta{display:flex;gap:12px;margin-top:32px;flex-wrap:wrap}
+.install{margin-top:28px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+.install code{color:var(--text);background:var(--surface);border:1px solid var(--line);padding:3px 8px;border-radius:6px;display:inline-block;margin-top:6px;word-break:break-all}
+
+.term{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 40px 120px -40px rgba(255,122,26,.25);overflow:hidden;font-family:var(--mono);font-size:13.5px;line-height:1.7}
+.term-bar{display:flex;gap:6px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.term-bar span{width:10px;height:10px;border-radius:50%;background:var(--line)}
+.term pre{padding:18px 20px;min-height:340px;white-space:pre-wrap;word-break:break-word;margin:0}
+.t-dim{color:var(--muted)}.t-acc{color:var(--accent)}.t-pass{color:var(--pass)}.t-block{color:var(--block)}
+.cursor{display:inline-block;width:8px;height:1.1em;background:var(--text);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* sections */
+section{padding:120px 0}
+h2{font-size:clamp(34px,5vw,64px);line-height:1.02;letter-spacing:-.035em;font-weight:800;max-width:16ch}
+.sub{color:var(--muted);font-size:18px;max-width:52ch;margin-top:18px}
+
+/* stacking cards */
+.stack{margin-top:64px;position:relative}
+.card{position:sticky;top:96px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:clamp(24px,4vw,48px);margin-bottom:28px;display:grid;grid-template-columns:1fr 1.1fr;gap:40px;min-height:380px;align-items:center;box-shadow:0 -20px 60px -30px #000}
+.card:nth-child(2){top:116px}.card:nth-child(3){top:136px}
+.card h3{font-size:clamp(26px,3vw,38px);letter-spacing:-.03em;line-height:1.1;margin:10px 0 14px}
+.card p{color:var(--muted)}
+.card .tag{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+.card pre{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:18px;font-family:var(--mono);font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-word;margin:0;overflow:hidden}
+
+/* numbers */
+.nums{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:18px;overflow:hidden;margin-top:64px}
+.num{background:var(--bg);padding:40px 28px}
+.num b{display:block;font-family:var(--mono);font-size:clamp(48px,6vw,80px);font-weight:700;letter-spacing:-.04em;line-height:1;color:var(--text)}
+.num span{color:var(--muted);font-size:15px;display:block;margin-top:12px}
+.list{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+.list div{border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:var(--surface)}
+.list code{color:var(--accent)}
+.list p{color:var(--muted);font-size:14px;margin-top:6px}
+
+/* pricing */
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:64px;max-width:980px}
+.plan{border:1px solid var(--line);border-radius:18px;padding:36px;background:var(--surface);display:flex;flex-direction:column}
+.plan.pro{border-color:var(--accent);background:linear-gradient(180deg,rgba(255,122,26,.08),var(--surface) 40%)}
+.plan h3{font-size:22px}
+.price{font-size:56px;font-weight:800;letter-spacing:-.04em;margin:10px 0 4px}
+.price small{font-size:16px;color:var(--muted);font-weight:500;letter-spacing:0}
+.plan ul{list-style:none;padding:0;margin:20px 0 28px;color:var(--muted);flex:1}
+.plan li{padding:7px 0 7px 26px;position:relative;border-bottom:1px solid var(--line)}
+.plan li:before{content:"✓";position:absolute;left:0;color:var(--pass);font-family:var(--mono)}
+.plan .btn{justify-content:center}
+
+/* faq */
+details{border-bottom:1px solid var(--line);padding:22px 0;max-width:860px}
+summary{cursor:pointer;font-size:19px;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary:after{content:"+";color:var(--accent);font-family:var(--mono)}
+details[open] summary:after{content:"−"}
+details p{color:var(--muted);margin-top:12px;max-width:70ch}
+.faq{margin-top:48px}
+
+footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--muted);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr;min-height:auto;gap:40px;padding-top:32px}
+  .card{grid-template-columns:1fr;position:relative;top:auto!important;min-height:0;gap:24px}
+  .nums{grid-template-columns:repeat(2,1fr)}
+  .list{grid-template-columns:1fr}
+  .plans{grid-template-columns:1fr}
+  nav ul li.hide-m{display:none}
+  section{padding:80px 0}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  h1 .w,.reveal{opacity:1!important;transform:none!important;transition:none!important}
+  .cursor{animation:none}
+}
+</style>
+</head>
+<body>
+<nav id="nav">
+  <a class="logo" href="#top"><i></i>Shipyard</a>
+  <ul>
+    <li class="hide-m"><a href="#how">How it works</a></li>
+    <li class="hide-m"><a href="#inside">What's inside</a></li>
+    <li class="hide-m"><a href="#faq">FAQ</a></li>
+    <li><a class="btn btn-primary" href="#pricing">Get Pro</a></li>
+  </ul>
+</nav>
+
+<main id="top">
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow">Plugin kit for Claude Code</div>
+      <h1 id="headline">Make Claude prove it shipped.</h1>
+      <p class="lede">Skills, subagents and hooks that make Claude Code run your tests before it says “done”, fix root causes instead of symptoms, and never force-push to main.</p>
+      <div class="cta">
+        <a class="btn btn-primary" href="#pricing">Get Pro — $19</a>
+        <a class="btn btn-ghost" href="https://github.com/invahak/shipyard">Try Lite free</a>
+      </div>
+      <div class="install">Free Lite, inside Claude Code:<br><code>/plugin marketplace add invahak/shipyard</code></div>
+    </div>
+    <div class="term" aria-label="Terminal demo: Shipyard blocks a force push and runs a ship check">
+      <div class="term-bar"><span></span><span></span><span></span></div>
+      <pre id="term"></pre>
+    </div>
+  </div>
+
+  <section id="how">
+    <div class="wrap">
+      <h2 class="reveal">Three habits your agent should already have.</h2>
+      <p class="sub reveal">Claude Code is fast. It is also confident. Shipyard turns the habits of a careful senior engineer into procedures Claude loads on its own.</p>
+      <div class="stack">
+        <article class="card">
+          <div>
+            <div class="tag">01 · Verify</div>
+            <h3>No “should work”. Only output.</h3>
+            <p><code>ship-check</code> detects your toolchain, runs tests, lint, type checks and build, re-reads the whole diff for debug prints, skipped tests and secrets, then maps every acceptance criterion to evidence.</p>
+          </div>
+<pre><span class="t-dim">&gt; /shipyard:ship</span>
+Ship check: <span class="t-pass">READY</span>
+- test:      pnpm test <span class="t-dim">→ exit 0, 142 passed</span>
+- lint:      pnpm lint <span class="t-dim">→ exit 0</span>
+- typecheck: tsc --noEmit <span class="t-dim">→ exit 0</span>
+Diff review (7 files, +210 −34)
+- Removed: console.log in src/api/user.ts:88
+Acceptance criteria
+1. Rejects expired tokens <span class="t-dim">→ test "rejects expired token"</span>
+2. Logs failed attempts <span class="t-block">→ unverified</span></pre>
+        </article>
+        <article class="card">
+          <div>
+            <div class="tag">02 · Debug</div>
+            <h3>Root cause, then a regression test.</h3>
+            <p><code>bug-hunt</code> makes Claude reproduce the failure, rank hypotheses, instrument one at a time and bisect regressions. After three failed fixes it stops and questions its assumptions instead of guessing again.</p>
+          </div>
+<pre><span class="t-dim">&gt; /shipyard:fix-issue checkout total off by one cent</span>
+Repro: <span class="t-pass">fails 10/10</span> with cart fixture #4
+Hypotheses (ranked)
+1. float rounding in applyDiscount  <span class="t-acc">← testing</span>
+2. tax computed before discount
+Root cause: src/cart/price.ts:41 rounds per line
+Fix: integer cents end to end
+Regression test: <span class="t-block">failed before</span>, <span class="t-pass">passes after</span></pre>
+        </article>
+        <article class="card">
+          <div>
+            <div class="tag">03 · Guard</div>
+            <h3>Some commands should never run unasked.</h3>
+            <p>Hooks run before every shell command and file edit. They block force pushes, <code>git reset --hard</code>, <code>rm -rf ~</code>, <code>curl | sh</code>, <code>DROP TABLE</code>, <code>terraform destroy</code>, edits to <code>.env</code> and lockfiles, and API keys written into code.</p>
+          </div>
+<pre><span class="t-dim">● Bash(git push --force origin main)</span>
+  <span class="t-block">⎿ Shipyard blocked this action: force push
+    to a protected branch.</span>
+<span class="t-dim">● Write(src/config.ts)</span>
+  <span class="t-block">⎿ Shipyard blocked this action: the new
+    content contains what looks like a Stripe
+    live key.</span>
+Claude: Both actions need your decision. Want me
+to push to a feature branch instead?</pre>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="inside">
+    <div class="wrap">
+      <h2 class="reveal">Everything in Pro.</h2>
+      <p class="sub reveal">Plain Markdown and dependency-free Node.js. Read every line before you install it.</p>
+      <div class="nums">
+        <div class="num"><b data-n="10">10</b><span>skills Claude loads on demand</span></div>
+        <div class="num"><b data-n="6">6</b><span>focused subagents</span></div>
+        <div class="num"><b data-n="8">8</b><span>slash commands</span></div>
+        <div class="num"><b data-n="4">4</b><span>safety and context hooks</span></div>
+      </div>
+      <div class="list">
+        <div class="reveal"><code>test-first</code><p>Red, green, refactor. One behavior per test, fails for the right reason first.</p></div>
+        <div class="reveal"><code>safe-refactor</code><p>Characterization tests, small verified steps, no behavior change mixed in.</p></div>
+        <div class="reveal"><code>security-sweep</code><p>Injection, authz, SSRF, secrets. Each finding has file:line and an exploit scenario.</p></div>
+        <div class="reveal"><code>perf-probe</code><p>Baseline, profile, change one thing, re-measure. Numbers before and after.</p></div>
+        <div class="reveal"><code>dependency-upgrade</code><p>One major at a time, changelogs read, tests after each bump.</p></div>
+        <div class="reveal"><code>claude-md-tuner</code><p>Shrinks your CLAUDE.md, verifies every path, shows the token saving per session.</p></div>
+        <div class="reveal"><code>codebase-onboarding</code><p>Entry points, build and test commands, one request traced end to end.</p></div>
+        <div class="reveal"><code>/plan · /tdd · /changelog</code><p>Plans with a check per step, TDD loops, release notes from git history.</p></div>
+        <div class="reveal"><code>5 CLAUDE.md templates</code><p>Generic, Next.js, Python, Go, Rust. Lean, so they cost fewer tokens per session.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing">
+    <div class="wrap">
+      <h2 class="reveal">Start free. Upgrade when it earns its place.</h2>
+      <div class="plans" id="pro">
+        <div class="plan">
+          <h3>Lite</h3>
+          <div class="price">$0 <small>MIT</small></div>
+          <ul>
+            <li>ship-check, bug-hunt, pr-writer skills</li>
+            <li>code-reviewer and repo-scout agents</li>
+            <li>/ship, /review, /fix-issue</li>
+            <li>Destructive shell command guard</li>
+          </ul>
+          <a class="btn btn-ghost" href="https://github.com/invahak/shipyard">Install from GitHub</a>
+        </div>
+        <div class="plan pro">
+          <h3>Pro</h3>
+          <div class="price">$19 <small>one-time</small></div>
+          <ul>
+            <li>All 10 skills, 6 agents, 8 commands</li>
+            <li>Secret, .env, key and lockfile protection hooks</li>
+            <li>Session-start git snapshot</li>
+            <li>5 CLAUDE.md templates, 2 permission presets</li>
+            <li>Installer for setups without plugins</li>
+            <li>All 1.x updates, 14-day refund</li>
+          </ul>
+          <a class="btn btn-primary" href="https://invahak.github.io/shipyard/#pro">Buy Shipyard Pro</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <h2 class="reveal">Questions.</h2>
+      <div class="faq">
+        <details><summary>What do I need?</summary><p>Claude Code with plugin support and Node.js 18 or newer on your PATH for the hooks. Works on macOS, Linux and Windows, in Bash and PowerShell.</p></details>
+        <details><summary>Will the hooks get in my way?</summary><p>They block only commands that destroy data, rewrite shared history, run downloaded scripts or publish packages. Claude gets the reason and asks you. Set <code>SHIPYARD_GUARD=off</code> to turn them off for one session.</p></details>
+        <details><summary>Does it send my code anywhere?</summary><p>No. Shipyard is Markdown files and local Node.js scripts with no dependencies and no network calls. You can read all of it.</p></details>
+        <details><summary>How do I get Pro after paying?</summary><p>You get a download link right after payment. Unzip it, run <code>/plugin marketplace add &lt;folder&gt;</code> and <code>/plugin install shipyard@shipyard-pro</code>. The README inside covers the plain-files installer too.</p></details>
+        <details><summary>Can my team use one copy?</summary><p>One license covers one developer on all their machines and projects, including client work. Each extra developer needs a license.</p></details>
+        <details><summary>What if it does not help me?</summary><p>Ask for a refund within 14 days.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Shipyard 1.0.0 · Independent project, not affiliated with Anthropic.</span>
+    <span><a href="https://github.com/invahak/shipyard">GitHub</a> · <a href="https://github.com/invahak/shipyard/issues">Support</a></span>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var nav = document.getElementById('nav');
+  addEventListener('scroll', function(){ nav.classList.toggle('scrolled', scrollY > 8); }, {passive:true});
+
+  // scroll-triggered text reveal: headline words
+  var h = document.getElementById('headline');
+  h.innerHTML = h.textContent.split(' ').map(function(w,i){ return '<span class="w" style="transition-delay:'+(i*70)+'ms">'+w+'</span>'; }).join(' ');
+  requestAnimationFrame(function(){ h.classList.add('in'); });
+
+  var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } }); }, {threshold:.15});
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
+
+  // number scramble on the stats row
+  var nums = document.querySelectorAll('.num b');
+  var nio = new IntersectionObserver(function(es){ es.forEach(function(e){
+    if(!e.isIntersecting) return; nio.unobserve(e.target);
+    var el = e.target, target = el.getAttribute('data-n'); if(reduce) return;
+    var t = 0, id = setInterval(function(){ t++; el.textContent = t > 14 ? target : Math.floor(Math.random()*90+10); if(t>14) clearInterval(id); }, 45);
+  }); }, {threshold:.5});
+  nums.forEach(function(n){ nio.observe(n); });
+
+  // hero terminal: typed demo
+  var term = document.getElementById('term');
+  var script = [
+    ['dim','> push the fix to main'],
+    ['', ''],
+    ['dim','● Bash(git push --force origin main)'],
+    ['block','  ⎿ Shipyard blocked this action: force push to a protected branch.'],
+    ['', ''],
+    ['', 'Claude: Force pushing main would overwrite shared history.'],
+    ['', 'I will open a branch and verify first.'],
+    ['', ''],
+    ['dim','● Skill(ship-check)'],
+    ['pass','  ✓ npm test      exit 0  · 87 passed'],
+    ['pass','  ✓ npm run lint  exit 0'],
+    ['pass','  ✓ tsc --noEmit  exit 0'],
+    ['acc','  ! removed console.log at src/cart.ts:52'],
+    ['', ''],
+    ['dim','● Bash(git push -u origin fix/cart-rounding)'],
+    ['pass','  ⎿ pushed. Ship check: READY']
+  ];
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function line(c,t){ return c ? '<span class="t-'+c+'">'+esc(t)+'</span>' : esc(t); }
+  if(reduce){ term.innerHTML = script.map(function(l){ return line(l[0],l[1]); }).join('\n'); return; }
+  var i = 0, j = 0, done = '';
+  function tick(){
+    if(i >= script.length){ term.innerHTML = done + '<span class="cursor"></span>'; setTimeout(function(){ i=0;j=0;done=''; tick(); }, 6000); return; }
+    var l = script[i];
+    var typed = l[0]==='dim' && l[1].charAt(0)==='>';
+    if(typed && j < l[1].length){ j++; term.innerHTML = done + line(l[0], l[1].slice(0,j)) + '<span class="cursor"></span>'; setTimeout(tick, 38); return; }
+    done += line(l[0], l[1]) + '\n'; i++; j = 0;
+    term.innerHTML = done + '<span class="cursor"></span>';
+    setTimeout(tick, l[1] ? 260 : 120);
+  }
+  tick();
+})();
+</script>
+</body>
+</html>

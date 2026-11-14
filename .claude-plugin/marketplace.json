@@ -1,0 +1,15 @@
+{
+  "name": "shipyard",
+  "description": "Shipyard Lite: free Claude Code kit with verification, debugging and review skills and a destructive-command guard.",
+  "owner": {
+    "name": "Shipyard"
+  },
+  "plugins": [
+    {
+      "name": "shipyard-lite",
+      "source": "./plugin",
+      "description": "Free edition of the Shipyard kit for Claude Code.",
+      "version": "1.0.0"
+    }
+  ]
+}

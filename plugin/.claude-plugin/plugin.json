@@ -1,0 +1,10 @@
+{
+  "name": "shipyard-lite",
+  "version": "1.0.0",
+  "description": "Free edition of Shipyard: ship-check, bug-hunt and pr-writer skills, code-reviewer and repo-scout agents, /ship /review /fix-issue commands, and a destructive-command guard hook.",
+  "author": {
+    "name": "Shipyard"
+  },
+  "homepage": "https://invahak.github.io/shipyard/",
+  "license": "MIT"
+}
